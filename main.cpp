@@ -1,6 +1,5 @@
 #include <phpcpp.h>
 #include <fcgiapp.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -118,13 +117,13 @@ public:
 
 		int length = (int) params[0];
 
-		Php::Value data;
-
-		char *buffer = data.reserve(length);
+		char *buffer = new char[length];
 
 		int read = FCGX_GetStr(buffer, length, request.in);
 
-		data.reserve(read);
+		Php::Value data = Php::Value(buffer, read);
+
+		delete buffer;
 
 		return data;
 	}
