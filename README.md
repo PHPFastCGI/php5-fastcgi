@@ -8,7 +8,7 @@ This extensions provides some of the functionality of libfcgi to PHP application
 
 These instructions below were used to install the extension on a virtual machine running Ubuntu 64-bit Server 15.04.
 
-I had a couple of issues with installing libfcgi. Firstly, you may need to add "#include <stdio.h>" to the top of fcgio.cpp to get it to compile. Secondly, check the directory that the ./configure is configuring the library to install to a directory that your linker actually looks in (not always the case).
+I had a couple of issues with installing libfcgi. Firstly, you may need to add "#include &lt;stdio.h&gt;" to the top of fcgio.cpp to get it to compile. Secondly, check that ./configure is configuring the library to install to a directory that your linker actually looks in (not always the case).
 
 ```sh
 sudo apt-get install php5-dev
