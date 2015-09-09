@@ -36,3 +36,36 @@ make install
 
 Now you must enable the extension in your PHP configuration.
 
+## API
+
+Currently, the extension provides a single interface and an implementation for it. The signatures for these are below:
+
+```php
+interface FastCGIApplicationInterface
+{
+    public function accept();
+    public function finish();
+    public function setExitStatus($exitStatus);
+    public function getParam($name);
+    public function getParams();
+    public function stdinRead($length);
+    public function stdinEof();
+    public function stdoutWrite($data);
+    public function stdoutEof();
+}
+
+class FastCGIApplication implements FastCGIApplicationInterface
+{
+    public function __construct($path = null, $backlog = 5);
+    public function accept();
+    public function finish();
+    public function setExitStatus($exitStatus);
+    public function getParam($name);
+    public function getParams();
+    public function stdinRead($length);
+    public function stdinEof();
+    public function stdoutWrite($data);
+    public function stdoutEof();
+}
+```
+
