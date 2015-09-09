@@ -1,25 +1,92 @@
 #include <phpcpp.h>
 #include <fcgiapp.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <iostream>
 
-#define BUFFER_SIZE 1024 * 20 // 20 KB buffer
-
-Php::Value fastcgi_accept(Php::Parameters &params)
+class FastCGIApplication: public Php::Base
 {
-	Php::Value callback = params[0];
 
-	FCGX_Init();
-
+private:
 	FCGX_Request request;
+	int          hasRequest;
 
-	FCGX_InitRequest(&request, 0, 0);
+	void ready(void)
+	{
+		if (!hasRequest) {
+			throw Php::Exception("There is no request ready to operate on");
+		}
+	}
 
-	char *buffer = new char[BUFFER_SIZE];
-	int bytes_read;
+public:
+	         FastCGIApplication() {}
+	virtual ~FastCGIApplication() {}
 
-	while (FCGX_Accept_r(&request) == 0) {
+	void __construct(Php::Parameters &params)
+	{
+		hasRequest = 0;
+
+		Php::Value path    = nullptr;
+		Php::Value backlog = 5;
+
+		switch (params.size()) {
+			case 2:  backlog = params[1]; // fall though
+			case 1:  path    = params[0]; break;
+			case 0:  break;
+			default: throw Php::Exception("The FastCGIApplication constructor takes a maximum of 2 arguments");
+		}
+
+		int sock = 0;
+
+		if (path.type() != Php::Type::Null) {
+			sock = FCGX_OpenSocket((const char *) path, (int) backlog);
+
+			if (sock < 0) {
+				throw Php::Exception("Could not open socket on given path");
+			}
+		}
+
+		FCGX_InitRequest(&request, sock, 0);
+	}
+
+	void __destruct(void)
+	{
+		FCGX_Free(&request, 1);
+	}
+
+	Php::Value accept(void)
+	{
+		return (hasRequest = (FCGX_Accept_r(&request) >= 0));
+	}
+
+	void finish(void)
+	{
+		hasRequest = 0;
+
+		FCGX_Finish_r(&request);
+	}
+
+	void setExitStatus(Php::Parameters &params)
+	{
+		ready();
+
+		int exitStatus = (int) params[0];
+		FCGX_SetExitStatus(exitStatus, request.out);
+	}
+
+	Php::Value getParam(Php::Parameters &params)
+	{
+		ready();
+
+		const char * name = (const char *) params[0];
+
+		return FCGX_GetParam(name, request.envp);
+	}
+
+	Php::Value getParams(void)
+	{
+		ready();
+
 		char **envp = request.envp;
 
 		Php::Array params;
@@ -35,53 +102,109 @@ Php::Value fastcgi_accept(Php::Parameters &params)
 
 			*(value++) = 0;
 
-			params[(const char *)name] = (const char *)value;
+			params[(const char *) name] = (const char *) value;
 
 			free(name);
 
 			envp++;
 		}
 
-		Php::Value stream = Php::call("fopen", "php://temp", "r+");
-
-		do {
-			bytes_read = FCGX_GetStr(buffer, BUFFER_SIZE, request.in);
-
-			if (bytes_read > 0) {
-				Php::call("fwrite", stream, bytes_read);
-			}
-		} while (bytes_read == BUFFER_SIZE);
-
-		Php::call("rewind", stream);
-
-		Php::Value result = callback(params, stream);
-
-		Php::call("fclose", stream);
-
-		if (Php::call("is_resource", result)) {
-			Php::Value block;
-
-			while ((block = Php::call("fread", result, BUFFER_SIZE)) != false) {
-				FCGX_PutStr(block, block.size(), request.out);
-			}
-		} else {
-			FCGX_PutStr(result, result.size(), request.out);
-		}
+		return params;	
 	}
 
-	delete buffer;
+	Php::Value stdinRead(Php::Parameters &params)
+	{
+		ready();
 
-	return false;
-}
+		int length = (int) params[0];
+
+		Php::Value data;
+
+		char *buffer = data.reserve(length);
+
+		int read = FCGX_GetStr(buffer, length, request.in);
+
+		data.reserve(read);
+
+		return data;
+	}
+
+	Php::Value stdinEof(void)
+	{
+		ready();
+
+		return (FCGX_HasSeenEOF(request.in) == EOF);
+	}
+
+	Php::Value stdoutWrite(Php::Parameters &params)
+	{
+		ready();
+
+		Php::Value data = params[0];
+
+		int written = FCGX_PutStr((const char *) data, data.size(), request.out);
+
+		if (written < 0) {
+			return false;
+		}
+
+		return written;
+	}
+
+	Php::Value stdoutEof(void)
+	{
+		ready();
+
+		return (FCGX_HasSeenEOF(request.out) == EOF);
+	}
+};
 
 extern "C" {
     PHPCPP_EXPORT void *get_module() 
     {
         static Php::Extension extension("fastcgi", "1.0");
-        
-       	extension.add("fastcgi_accept", fastcgi_accept, {
-		Php::ByVal("callback", Php::Type::Callable)
+
+	/* Initialize library */
+	extension.onStartup([]() {
+		FCGX_Init();
 	});
+
+	/* Define Interface: FastCGIApplicationInterface */
+	Php::Interface fastCGIApplicationInterface("FastCGIApplicationInterface");
+
+	fastCGIApplicationInterface.method("accept");
+	fastCGIApplicationInterface.method("finish");
+	fastCGIApplicationInterface.method("setExitStatus", { Php::ByVal("exitStatus", Php::Type::Numeric) });
+	fastCGIApplicationInterface.method("getParam",      { Php::ByVal("name",       Php::Type::String)  });
+	fastCGIApplicationInterface.method("getParams");
+	fastCGIApplicationInterface.method("stdinRead",     { Php::ByVal("length",     Php::Type::Numeric) });
+	fastCGIApplicationInterface.method("stdinEof");
+	fastCGIApplicationInterface.method("stdoutWrite",   { Php::ByVal("data",       Php::Type::String)  });
+	fastCGIApplicationInterface.method("stdoutEof");
+
+	/* Define Class: FastCGIApplication */
+	Php::Class<FastCGIApplication> fastCGIApplicationClass("FastCGIApplication");
+
+	fastCGIApplicationClass.method("__construct", &FastCGIApplication::__construct, {
+		Php::ByVal("path",    Php::Type::String, false),
+		Php::ByVal("backlog", Php::Type::Numeric, false)
+	});
+	fastCGIApplicationClass.method("__destruct",    &FastCGIApplication::__destruct);
+
+	fastCGIApplicationClass.method("accept",        &FastCGIApplication::accept);
+	fastCGIApplicationClass.method("finish",        &FastCGIApplication::finish);
+	fastCGIApplicationClass.method("setExitStatus", &FastCGIApplication::setExitStatus, { Php::ByVal("exitStatus", Php::Type::Numeric) });
+	fastCGIApplicationClass.method("getParam",      &FastCGIApplication::getParam,      { Php::ByVal("name",       Php::Type::String)  });
+	fastCGIApplicationClass.method("getParams",     &FastCGIApplication::getParams);
+	fastCGIApplicationClass.method("stdinRead",     &FastCGIApplication::stdinRead,     { Php::ByVal("length",     Php::Type::Numeric) });
+	fastCGIApplicationClass.method("stdinEof",      &FastCGIApplication::stdinEof);
+	fastCGIApplicationClass.method("stdoutWrite",   &FastCGIApplication::stdoutWrite,   { Php::ByVal("data",       Php::Type::String)  });
+	fastCGIApplicationClass.method("stdoutEof",     &FastCGIApplication::stdoutEof);
+
+	fastCGIApplicationClass.implements(fastCGIApplicationInterface);
+
+	extension.add(fastCGIApplicationInterface);
+	extension.add(fastCGIApplicationClass);
 
         return extension;
     }
