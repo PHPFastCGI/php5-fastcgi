@@ -15,6 +15,7 @@ ZEND_DECLARE_MODULE_GLOBALS(fastcgi)
 PHP_INI_BEGIN()
     STD_PHP_INI_ENTRY("fastcgi.listen_backlog", "5", PHP_INI_ALL, OnUpdateLong, listen_backlog, zend_fastcgi_globals, fastcgi_globals)
 PHP_INI_END()
+/* }}} */
 
 /* Handlers */
 static zend_object_handlers fastcgi_application_handlers;
@@ -27,6 +28,7 @@ zend_class_entry *php_fastcgi_application_entry;
 PHP_METHOD(fastcgi_application, __construct)
 {
 }
+/* }}} */
 
 /* {{{ arginfo */
 ZEND_BEGIN_ARG_INFO(arginfo_fastcgi_application_construct, 0)
