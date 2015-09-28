@@ -1,7 +1,7 @@
 #ifndef PHP_FASTCGI_H
 #define PHP_FASTCGI_H 1
 
-#define PHP_FASTCGI_VERSION "dev"
+#define PHP_FASTCGI_VERSION "0.1"
 #define PHP_FASTCGI_EXTNAME "fastcgi"
 
 extern zend_module_entry fastcgi_module_entry;
