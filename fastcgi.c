@@ -24,6 +24,14 @@ static zend_object_handlers fastcgi_application_class_handlers;
 zend_class_entry *php_fastcgi_application_interface_entry;
 zend_class_entry *php_fastcgi_application_class_entry;
 
+static void php_fastcgi_verify_has_request(php_fastcgi_application_class_object *class_object) /* {{{ */
+{
+	if (!class_object->has_request) {
+		zend_throw_exception(zend_exception_get_default(TSRMLS_C), "There is no request ready to operate on", 0 TSRMLS_CC);
+	}
+}
+/* }}} */
+
 /* {{{ proto void FastCGIApplication::__construct([string path [, int backlog]])
    Constructor. */
 PHP_METHOD(fastcgi_application_class, __construct)
@@ -97,7 +105,7 @@ PHP_METHOD(fastcgi_application_class, setExitStatus)
 		RETURN_NULL();
 	}
 
-	/* TODO: has_request */
+	php_fastcgi_verify_has_request(class_object);
 
 	FCGX_SetExitStatus(exit_status, (class_object->request).out);
 }
@@ -118,7 +126,7 @@ PHP_METHOD(fastcgi_application_class, getParam)
 		RETURN_NULL();
 	}
 
-	/* TODO: has_request */
+	php_fastcgi_verify_has_request(class_object);
 
 	value = FCGX_GetParam(param, (class_object->request).envp);
 
@@ -140,7 +148,7 @@ PHP_METHOD(fastcgi_application_class, getParams)
 
 	class_object = (php_fastcgi_application_class_object *) zend_object_store_get_object(object TSRMLS_CC);
 
-	/* TODO: has_request */
+	php_fastcgi_verify_has_request(class_object);
 
 	array_init(return_value);
 
@@ -181,7 +189,7 @@ PHP_METHOD(fastcgi_application_class, stdinRead)
 		RETURN_NULL();
 	}
 
-	/* TODO: has_request */
+	php_fastcgi_verify_has_request(class_object);
 
 	buffer = (char *) emalloc(len);
 
@@ -231,7 +239,7 @@ PHP_METHOD(fastcgi_application_class, stdoutWrite)
 		RETURN_NULL();
 	}
 
-	/* TODO: has_request */
+	php_fastcgi_verify_has_request(class_object);
 
 	len = FCGX_PutStr(data, data_len, (class_object->request).out);
 
