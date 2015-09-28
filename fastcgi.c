@@ -138,6 +138,8 @@ PHP_METHOD(fastcgi_application_class, getParams)
 	zval *object = getThis();
 	char **envp, *name, *value;
 
+	class_object = (php_fastcgi_application_class_object *) zend_object_store_get_object(object TSRMLS_CC);
+
 	/* TODO: has_request */
 
 	array_init(return_value);
