@@ -7,8 +7,15 @@
 extern zend_module_entry fastcgi_module_entry;
 #define phpext_fastcgi_ptr &fastcgi_module_entry
 
+typedef struct _php_fastcgi_application_class_object {
+	zend_object zo;
+    int initialised;
+	FCGX_Request request;
+	int has_request;
+} php_fastcgi_application_class_object;
+
 ZEND_BEGIN_MODULE_GLOBALS(fastcgi)
-    long listen_backlog;
+	long listen_backlog;
 ZEND_END_MODULE_GLOBALS(fastcgi)
 
 #ifdef ZTS
