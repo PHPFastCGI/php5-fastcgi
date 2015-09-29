@@ -13,7 +13,7 @@ ZEND_DECLARE_MODULE_GLOBALS(fastcgi)
 /* {{{ PHP_INI
 */
 PHP_INI_BEGIN()
-		STD_PHP_INI_ENTRY("fastcgi.listen_backlog", "5", PHP_INI_ALL, OnUpdateLong, listen_backlog, zend_fastcgi_globals, fastcgi_globals)
+	STD_PHP_INI_ENTRY("fastcgi.listen_backlog", "5", PHP_INI_ALL, OnUpdateLong, listen_backlog, zend_fastcgi_globals, fastcgi_globals)
 PHP_INI_END()
 /* }}} */
 
@@ -71,7 +71,7 @@ PHP_METHOD(fastcgi_application_class, accept)
 
 	class_object = (php_fastcgi_application_class_object *) zend_object_store_get_object(object TSRMLS_CC);
 
-    class_object->has_request = (FCGX_Accept_r(&(class_object->request)) >= 0);
+	class_object->has_request = (FCGX_Accept_r(&(class_object->request)) >= 0);
 
 	RETURN_BOOL(class_object->has_request);
 }
@@ -86,7 +86,7 @@ PHP_METHOD(fastcgi_application_class, finish)
 
 	class_object = (php_fastcgi_application_class_object *) zend_object_store_get_object(object TSRMLS_CC);
 
-    class_object->has_request = 0;
+	class_object->has_request = 0;
 	FCGX_Finish_r(&(class_object->request));
 }
 /* }}} */
@@ -452,4 +452,3 @@ ZEND_GET_MODULE(fastcgi)
  * vim600: sw=4 ts=4 fdm=marker
  * vim<600: sw4 ts=4
  */
-
