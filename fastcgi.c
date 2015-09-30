@@ -45,7 +45,7 @@ PHP_METHOD(fastcgi_application_class, __construct)
 	class_object = (php_fastcgi_application_class_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|sl", &path_len, &backlog)) {
-		RETURN_NULL();
+		return;
 	}
 
 	if (path) {
@@ -102,7 +102,7 @@ PHP_METHOD(fastcgi_application_class, setExitStatus)
 	class_object = (php_fastcgi_application_class_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &exit_status)) {
-		RETURN_NULL();
+		return;
 	}
 
 	php_fastcgi_verify_has_request(class_object);
@@ -123,7 +123,7 @@ PHP_METHOD(fastcgi_application_class, getParam)
 	class_object = (php_fastcgi_application_class_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &param, &param_len)) {
-		RETURN_NULL();
+		return;
 	}
 
 	php_fastcgi_verify_has_request(class_object);
@@ -186,7 +186,7 @@ PHP_METHOD(fastcgi_application_class, stdinRead)
 	class_object = (php_fastcgi_application_class_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &len)) {
-		RETURN_NULL();
+		return;
 	}
 
 	php_fastcgi_verify_has_request(class_object);
@@ -236,7 +236,7 @@ PHP_METHOD(fastcgi_application_class, stdoutWrite)
 	class_object = (php_fastcgi_application_class_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &data, &data_len)) {
-		RETURN_NULL();
+		return;
 	}
 
 	php_fastcgi_verify_has_request(class_object);
