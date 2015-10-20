@@ -44,7 +44,7 @@ PHP_METHOD(fastcgi_application_class, __construct)
 
 	class_object = (php_fastcgi_application_class_object *) zend_object_store_get_object(object TSRMLS_CC);
 
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|sl", &path_len, &backlog)) {
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|sl", &path, &path_len, &backlog)) {
 		return;
 	}
 
